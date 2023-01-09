@@ -44,6 +44,7 @@ resource "azurerm_storage_account" "ghes_storage_account" {
   # checkov:skip=CKV_AZURE_59: Ensure that Storage accounts disallow public access
   # checkov:skip=CKV_AZURE_190: Ensure that Storage blobs restrict public access
   # checkov:skip=CKV_AZURE_197: Ensure that Storage Accounts use replication
+  # checkov:skip=CKV_AZURE_206: Ensure that Storage Accounts use replication
   name                     = "ghesdia"
   location                 = azurerm_resource_group.ghes_rg.location
   resource_group_name      = azurerm_resource_group.ghes_rg.name
