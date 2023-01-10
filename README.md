@@ -12,7 +12,7 @@ The information regarding created Azure resources will be available as Terraform
 
 For additional variables, see the `variables.tf` and `terraform.tfvars` files.
 
-All the remaining of this README is a copy of [the original one](https://github.com/Azure-Samples/terraform-github-actions), except the ["Getting Started"](#getting-started) section where I've all the required `az` command to setup properly the Azure environment.
+All the remaining of this README is a copy of [the original one](https://github.com/Azure-Samples/terraform-github-actions), except the ["Getting Started"](#getting-started) section where I've add all the required `az` command to properly setup the Azure environment.
 
 ## Architecture
 
