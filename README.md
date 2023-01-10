@@ -1,4 +1,4 @@
-# ghes-deploy-terraform-azure
+# deploy-ghes-terraform-azure
 
 This is a fork of [Azure-Samples/terraform-github-actions](https://github.com/Azure-Samples/terraform-github-actions) to deploy GitHub Enterprise Server on Azure using Terraform and GitHub Actions.
 
