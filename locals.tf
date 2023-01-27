@@ -50,7 +50,7 @@ locals {
     }
     git = {
       name                   = "GIT"
-      priority               = 1009
+      priority               = 1010
       protocol               = "Tcp"
       destination_port_range = "9418"
     }
