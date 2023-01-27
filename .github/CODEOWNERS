@@ -1,0 +1,3 @@
+# ghsioux is responsible for the Terraform code of this repository
+*.tf @ghsioux
+*.tf @tfvars
