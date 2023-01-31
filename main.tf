@@ -241,3 +241,99 @@ resource "azurerm_storage_container" "gh_packages_container" {
   container_access_type = "private"
 }
 
+
+#####################################################
+## GitHub High Availability Resources (if enabled) ##
+## ghes_high_availability = true                   ##
+#####################################################
+
+# Create GHES replica public IPs
+resource "azurerm_public_ip" "ghes_replica_public_ip" {
+  count               = var.ghes_high_availability ? 1 : 0
+  name                = "ghesReplicaPublicIP"
+  location            = azurerm_resource_group.ghes_rg.location
+  resource_group_name = azurerm_resource_group.ghes_rg.name
+  allocation_method   = "Static"
+  domain_name_label   = format("%s-%s-replica", var.ghes_fqdn_prefix, random_pet.ghes_random_pet.id)
+}
+
+# Create GHES replica network interface
+resource "azurerm_network_interface" "ghes_replica_nic" {
+  count               = var.ghes_high_availability ? 1 : 0
+  name                = "ghesreplicaNIC"
+  location            = azurerm_resource_group.ghes_rg.location
+  resource_group_name = azurerm_resource_group.ghes_rg.name
+
+  ip_configuration {
+    name                          = "ghes_replica_nic_configuration"
+    subnet_id                     = azurerm_subnet.ghes_subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.ghes_replica_public_ip[count.index].id
+  }
+}
+
+# Connect the security group to the GHES replica network interface
+resource "azurerm_network_interface_security_group_association" "ghes_replica_nsg_nic_association" {
+  count                     = var.ghes_high_availability ? 1 : 0
+  network_interface_id      = azurerm_network_interface.ghes_replica_nic[count.index].id
+  network_security_group_id = azurerm_network_security_group.ghes_nsg.id
+}
+
+# Create GHES replica virtual machine
+resource "azurerm_linux_virtual_machine" "ghes_vm_replica" {
+  count                 = var.ghes_high_availability ? 1 : 0
+  name                  = "ghesVMreplica"
+  location              = azurerm_resource_group.ghes_rg.location
+  resource_group_name   = azurerm_resource_group.ghes_rg.name
+  network_interface_ids = [azurerm_network_interface.ghes_replica_nic[count.index].id]
+  size                  = var.ghes_vm_size
+
+  os_disk {
+    name                 = "ghesReplicaOsDisk"
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+  }
+
+  source_image_reference {
+    publisher = "GitHub"
+    offer     = "GitHub-Enterprise"
+    sku       = "GitHub-Enterprise"
+    version   = var.ghes_release
+  }
+
+  computer_name                   = "ghesReplica"
+  admin_username                  = "azureuser"
+  disable_password_authentication = true
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = var.ghes_admin_ssh_pubkey
+  }
+
+  boot_diagnostics {
+    storage_account_uri = azurerm_storage_account.ghes_storage_account.primary_blob_endpoint
+  }
+
+  allow_extension_operations = false
+}
+
+# Create GHES replica data disk
+resource "azurerm_managed_disk" "ghes_replica_data_disk" {
+  count                = var.ghes_high_availability ? 1 : 0
+  name                 = "ghes-replica-data-disk1"
+  location             = azurerm_resource_group.ghes_rg.location
+  resource_group_name  = azurerm_resource_group.ghes_rg.name
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 250
+}
+
+# Attach the data disk to the GHES replica VM
+resource "azurerm_virtual_machine_data_disk_attachment" "ghes_replica_data_disk_attachment" {
+  count              = var.ghes_high_availability ? 1 : 0
+  managed_disk_id    = azurerm_managed_disk.ghes_replica_data_disk[count.index].id
+  virtual_machine_id = azurerm_linux_virtual_machine.ghes_vm_replica[count.index].id
+  lun                = "10"
+  caching            = "ReadWrite"
+}
+

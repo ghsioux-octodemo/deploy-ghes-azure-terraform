@@ -39,3 +39,9 @@ variable "ghes_use_packages" {
   type        = bool
   description = "Whether or not to enable GitHub Packages (will create a dedicated storage account if true)"
 }
+
+variable "ghes_high_availability" {
+  default     = false
+  type        = bool
+  description = "Whether or not to pop a GHES replica VM for HA. Network failover strategy will be DNS-based, to be done manually."
+}
