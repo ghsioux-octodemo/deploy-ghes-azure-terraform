@@ -152,6 +152,61 @@ resource "azurerm_linux_virtual_machine" "ghes_vm" {
   allow_extension_operations = false
 }
 
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_key_vault" "example" {
+  name                        = "examplekeyvault"
+  location                    = azurerm_resource_group.ghes_rg.location
+  resource_group_name         = azurerm_resource_group.ghes_rg.name
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  sku_name                    = "standard"
+  purge_protection_enabled    = false
+  soft_delete_retention_days  = 7
+}
+
+resource "azurerm_key_vault_key" "key" {
+  name         = "examplekey"
+  key_vault_id = azurerm_key_vault.example.id
+  key_type     = "RSA"
+  key_size     = 2048
+
+  key_opts = [
+    "decrypt",
+    "encrypt",
+    "sign",
+    "unwrapKey",
+    "verify",
+    "wrapKey",
+  ]
+
+  depends_on = [
+    azurerm_key_vault.example
+  ]
+}
+
+resource "azurerm_disk_encryption_set" "des" {
+  name                = "des"
+  resource_group_name = azurerm_resource_group.ghes_rg.name
+  location            = azurerm_resource_group.ghes_rg.location
+
+  key_vault_key_id = azurerm_key_vault_key.key.id
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "azurerm_managed_disk" "example" {
+  name                 = "manageddisk"
+  location             = azurerm_resource_group.ghes_rg.location
+  resource_group_name  = azurerm_resource_group.ghes_rg.name
+  storage_account_type = "Standard_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = "1"
+
+  disk_encryption_set_id = azurerm_disk_encryption_set.des.id
+}
+
 # Create GHES data disk
 resource "azurerm_managed_disk" "ghes_data_disk" {
   # checkov:skip=CKV_AZURE_93: Ensure that managed disks use a specific set of disk encryption sets for the customer-managed key encryption
@@ -240,4 +295,5 @@ resource "azurerm_storage_container" "gh_packages_container" {
   storage_account_name  = azurerm_storage_account.gh_packages_storage_account[count.index].name
   container_access_type = "private"
 }
+
 
