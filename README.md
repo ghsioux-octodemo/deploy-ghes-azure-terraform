@@ -1,6 +1,6 @@
 # Terraform Project for GitHub Enterprise Server (GHES) on Azure
 
-This repository contains the Terraform configuration files for creating a GitHub Enterprise Server (GHES) on Azure.
+This repository contains the Terraform configuration files for deploying a GitHub Enterprise Server (GHES) VM on Azure.
 
 ## Resources
 
