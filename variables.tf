@@ -14,7 +14,7 @@ variable "ghes_vm_size" {
 }
 
 variable "ghes_release" {
-  default     = "3.7.1"
+  default     = "3.11.5"
   description = "The GitHub Enterprise Server release."
 }
 
