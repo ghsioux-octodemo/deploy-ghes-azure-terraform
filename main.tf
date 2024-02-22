@@ -15,6 +15,8 @@ resource "azurerm_virtual_network" "ghes_network" {
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.ghes_rg.location
   resource_group_name = azurerm_resource_group.ghes_rg.name
+
+   dns_servers = ["1.1.1.1"]  
 }
 
 # Create subnet
